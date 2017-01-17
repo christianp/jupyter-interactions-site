@@ -5,6 +5,7 @@ from get_metadata import Notebook
 from distutils.dir_util import copy_tree
 import yaml
 import codecs
+import argparse
 
 class Site(object):
     def __init__(self,build_path='build',template_path='templates',static_path='static',site_context={}):
@@ -54,6 +55,12 @@ class NotebookSite(Site):
 
         for notebook in self.notebooks:
             pass
+
+parser = argparse.ArgumentParser(description='Build the jupyter-interactions site')
+parser.add_argument('--config',dest='config',default='',help='name of the config file to use')
+
+args = parser.parse_args()
+config_file = 'config_{}.yml'.format(args.config) if args.config else 'config.yml'
 
 config = yaml.load(open('config.yml').read())
 site = NotebookSite(**config)
