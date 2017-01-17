@@ -4,6 +4,7 @@ import shutil
 from get_metadata import Notebook
 from distutils.dir_util import copy_tree
 import yaml
+import codecs
 
 class Site(object):
     def __init__(self,build_path='build',template_path='templates',static_path='static',site_context={}):
@@ -25,7 +26,7 @@ class Site(object):
         ctx = {}
         ctx.update({'site':self.site_context})
         ctx.update(context)
-        open(os.path.join(self.build_path,destination),'w').write(template.render(ctx))
+        codecs.open(os.path.join(self.build_path,destination),'w',encoding='utf-8').write(template.render(ctx))
 
     def copy_static(self):
         copy_tree(self.static_path, os.path.join(self.build_path,'static'))
@@ -49,7 +50,7 @@ class NotebookSite(Site):
 
     def build(self):
         super(NotebookSite,self).build()
-        site.make_file('gallery.html','gallery.html',{'notebooks':self.notebooks})
+        site.make_file('index.html','index.html',{'notebooks':self.notebooks})
 
         for notebook in self.notebooks:
             pass

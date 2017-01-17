@@ -51,8 +51,9 @@ class Notebook(object):
         if m:
             self.author = m.group(1)
 
-        description_text = ''.join(jmespath.search('cells[2].source',self.data))
-        self.description = markdown2html_mistune(description_text)
+        description_text = jmespath.search('cells[2].source',self.data)
+        if description_text:
+            self.description = markdown2html_mistune(''.join(description_text))
 
     def get_image(self):
         for output in jmespath.search('cells[].outputs[].data',self.data):
