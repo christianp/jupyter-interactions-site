@@ -40,18 +40,19 @@ class Notebook(object):
         re_title = re.compile(r'^#\s+(.*)$',re.MULTILINE)
         re_author = re.compile(r'^##\s+Author:\s+(.*)$',re.MULTILINE)
 
-        text = ''.join(jmespath.search('cells[0].source',self.data))
-        if not text:
-            return
+        title_text = jmespath.search('cells[0].source[0]',self.data)
+        if title_text:
+            m = re_title.search(title_text)
+            if m:
+                self.title = m.group(1)
 
-        m = re_title.search(text)
-        self.title = 'arg'
-        if m:
-            self.title = m.group(1)
-        m = re_author.search(text)
+        author_text = jmespath.search('cells[1].source[0]',self.data)
+        m = re_author.search(author_text)
         if m:
             self.author = m.group(1)
-            self.description = markdown2html_mistune(text[m.end()+1:].strip())
+
+        description_text = ''.join(jmespath.search('cells[2].source',self.data))
+        self.description = markdown2html_mistune(description_text)
 
     def get_image(self):
         for output in jmespath.search('cells[].outputs[].data',self.data):
