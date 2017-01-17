@@ -6,6 +6,22 @@ from distutils.dir_util import copy_tree
 import yaml
 import codecs
 import argparse
+import time
+import re
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+class EventHandler(FileSystemEventHandler):
+    def __init__(self,site):
+        self.site = site
+
+    def dispatch(self,event):
+        if not re.match(r'.*\d+$',event.src_path):
+            super(EventHandler,self).dispatch(event)
+
+    def on_created(self,event):
+        print(event.src_path)
+        self.site.build()
 
 class Site(object):
     def __init__(self,build_path='build',template_path='templates',static_path='static',site_context={}):
@@ -35,6 +51,22 @@ class Site(object):
     def build(self):
         self.copy_static()
 
+    def watch(self):
+        observer = Observer()
+        event_handler = EventHandler(self)
+
+        for path in [self.template_path,self.static_path]:
+            observer.schedule(event_handler,path,recursive=True)
+            observer.start()
+            print("Watching for changes...")
+
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                observer.stop()
+            observer.join()
+
 class NotebookSite(Site):
     def __init__(self,notebook_path='.',*args,**kwargs):
         self.notebook_path = notebook_path
@@ -42,6 +74,7 @@ class NotebookSite(Site):
         self.load_notebooks()
 
     def load_notebooks(self):
+        print("Loading notebooks...")
         self.notebooks = []
         for filename in os.listdir(self.notebook_path):
             name,ext = os.path.splitext(filename)
@@ -50,18 +83,29 @@ class NotebookSite(Site):
                 self.notebooks.append(notebook)
 
     def build(self):
+        print('Building in {}'.format(self.build_path))
+
         super(NotebookSite,self).build()
         site.make_file('index.html','index.html',{'notebooks':self.notebooks})
 
         for notebook in self.notebooks:
             pass
 
+        print("Success!")
+
 parser = argparse.ArgumentParser(description='Build the jupyter-interactions site')
 parser.add_argument('--config',dest='config',default='',help='name of the config file to use')
+parser.add_argument('--watch',action='store_true',dest='watch',default=False,help='Automatically rebuild when a file is changed')
 
 args = parser.parse_args()
 config_file = 'config_{}.yml'.format(args.config) if args.config else 'config.yml'
 
 config = yaml.load(open('config.yml').read())
 site = NotebookSite(**config)
-site.build()
+print('{} notebooks found\n'.format(len(site.notebooks)))
+
+if args.watch:
+    site.watch()
+else:
+    site.build()
+    print("Open {}/index.html in your browser".format(site.build_path))
