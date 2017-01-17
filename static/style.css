@@ -1,0 +1,53 @@
+html {
+    font-size: 16px;
+    font-family: sans-serif;
+}
+
+.item .title a {
+    text-decoration: none;
+}
+
+.image img, .image svg {
+    width: 15rem;
+    height: 15rem;
+    margin-right: 1rem;
+}
+
+#items {
+    list-style: none;
+    display: flex;
+    padding: 0;
+    flex-wrap: wrap;
+}
+#items > .item {
+    flex: 0 0 30rem;
+    background: #eee;
+    margin: 0.5rem;
+}
+.item .title {
+    margin-top: 0;
+    height: 2.4em;
+    font-size: 1.5rem;
+}
+.item .description a {
+    word-break: break-all;
+}
+
+.item header {
+    background: #ddd;
+}
+
+.item .author {
+    height: 1.2em;
+    font-size: 1rem;
+}
+
+.item header, .item .content {
+    padding: 0.5rem;
+}
+.item main {
+    display: flex;
+}
+.item main > * {
+    flex-grow: 1;
+}

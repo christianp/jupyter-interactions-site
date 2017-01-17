@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <ul id="items">
+        {% for notebook in notebooks %}
+        {% if notebook.valid %}
+        <li class="item">
+            <header>
+                <h1 class="title"><a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.title}}</a></h1>
+                <h2 class="author">{{notebook.author}}</h2>
+            </header>
+            <div class="content">
+                {% if notebook.image %}
+                <div class="image">
+                    <a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.html|safe}}</a>
+                </div>
+                {% endif %}
+                {% if notebook.description %}<div class="description">{{notebook.description}}</div>{% endif %}
+            </div>
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+{% endblock content %}
