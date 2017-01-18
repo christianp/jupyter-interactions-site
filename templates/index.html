@@ -1,66 +1,77 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <section id="intro">
-        <p>A repository of Jupyter notebooks that demonstrate something using ipywidgets.</p>
+    <section id="intro" class="jumbotron">
+        <h1 class="display-3">Jupyter Interactions</h1>
+        <p class="lead">A repository of Jupyter notebooks that demonstrate something using ipywidgets.</p>
         <p>All contributed notebooks should follow the template laid out in template.ipynb</p>
     </section>
 
-    <section id="item-gallery">
-        <div id="search">
-            <label>Search: <input type="text" id="search-query"></label>
+    <section id="item-gallery" class="container-fluid">
+        <div class="form-group row">
+            <label for="search-query" class="text-right offset-1 col-1 col-form-label">Search</label>
+            <div class="col-9">
+                <input class="form-control" type="search" value="" id="search-query">
+            </div>
         </div>
 
-        <ul id="items">
-            {% for notebook in notebooks %}
-            {% if notebook.valid %}
-            <li class="item" data-keywords="{% if notebook.keywords|length %}{{notebook.keywords|join(',')}}{% endif %}">
-                <header>
-                    <h1 class="title"><a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.title|default('Untitled')|markdown}}</a></h1>
-                    {% if notebook.author %}
-                        <h2 class="author">{{notebook.author|markdown}}</h2>
-                    {% else %}
-                        <h2 class="author none">No author specified</h2>
-                    {% endif %}
-                </header>
-                <div class="content">
-                    {% if notebook.image %}
-                    <div class="image">
-                        <a title="Open the {{notebook.title}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.html|safe}}</a>
-                    </div>
-                    {% endif %}
-                    {% if notebook.description %}<div class="description clearfix">{{notebook.description|markdown}}</div>{% endif %}
-                    
-                    {% if notebook.references|length %}
-                    <div class="references">
-                        <h3>References</h3>
-                        <ul>
-                            {% for ref in notebook.references %}
-                            <li>{{ref|markdown}}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    {% endif %}
-                </div>
-            </li>
-            {% endif %}
-            {% endfor %}
-            <li class="item" data-keywords="">
-                <header>
-                    <h1 class="title">
+        <div class="card-columns" id="items">
+            <div class="">
+            <div class="card item" data-keywords="">
+                <div class="card-block">
+                    <h4 class="card-title">
                         <a href="https://github.com/mikecroucher/jupyter-interactions/blob/master/Readme.md" title="Add a notebook"> <!-- this should go to a "how to submit a notebook" page -->
                             Your interaction
                         </a>
-                    </h1>
-                    <h2 class="author">You</h2>
-                </header>
-                <div class="content">
-                    <div class="description">
-                        <p>Add your amazing interaction to this gallery. It's really easy!</p>
-                        <p>Go to <a href="https://github.com/mikecroucher/jupyter-interactions">our GitHub repository</a> to get started.</p>
+                        <br>
+                        <small class="author">You</small>
+                    </h4>
+                    <p class="card-text">Add your amazing interaction to this gallery. It's really easy!</p>
+                    <p class="card-text">Go to <a href="https://github.com/mikecroucher/jupyter-interactions">our GitHub repository</a> to get started.</p>
+                </div>
+            </div>
+            </div>
+            {% for notebook in notebooks %}
+            {% if notebook.valid %}
+            <div class="">
+            <div class="item card" data-keywords="{% if notebook.keywords|length %}{{notebook.keywords|join(',')}}{% endif %}">
+                {% if notebook.image %}
+                <div class="card-img-top">
+                    <a title="Open the {{notebook.title}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.html|safe}}</a>
+                </div>
+                {% endif %}
+                <div class="card-block">
+                    <h4 class="card-title">
+                        <a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.title|default('Untitled')|markdown}}</a>
+                        <br>
+                        {% if notebook.author %}
+                            <small class="author">{{notebook.author|markdown}}</small>
+                        {% else %}
+                            <small class="author none">No author specified</small>
+                        {% endif %}
+                    </h4>
+                    <div class="card-text">
+                        {% if notebook.description %}<div class="description clearfix">{{notebook.description|markdown}}</div>{% endif %}
+                        
+                        {% if notebook.references|length %}
+                        <div class="references">
+                            <h3>References</h3>
+                            <ul>
+                                {% for ref in notebook.references %}
+                                <li>{{ref|markdown}}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-            </li>
+                <div class="card-footer">
+                    <strong>Keywords:</strong> {% if notebook.keywords|length %}{{notebook.keywords|join(', ') }}{% else %}<em>None specified</em>{% endif %}
+                </div>
+            </div>
+            </div>
+            {% endif %}
+            {% endfor %}
         </ul>
     </section>
 {% endblock content %}
