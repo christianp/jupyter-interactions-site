@@ -95,9 +95,6 @@ class NotebookSite(Site):
         super(NotebookSite,self).build()
         site.make_file('index.html','index.html',{'notebooks':self.notebooks})
 
-        for notebook in self.notebooks:
-            pass
-
         print("Success!")
 
 parser = argparse.ArgumentParser(description='Build the jupyter-interactions site')

@@ -5,9 +5,11 @@ import re
 import sys
 
 import jmespath
+from termcolor import cprint
 
-RE_TITLE = r'^#\s+(.*)$'
-RE_AUTHOR =r'^##\s+Author:\s+(.*)$'  # TODO Support more than one author
+
+RE_TITLE = r'^#\s+(.+)$'
+RE_AUTHOR =r'^##\s+Author:\s+(.+)$'  # TODO Support more than one author
 
 def handle_svg(data):
     source = ''.join(data)
@@ -20,6 +22,29 @@ image_handlers = {
     'image/svg+xml': handle_svg,
     'image/png': handle_png,
 }
+
+def title_validator(title):
+    if not re.match(r"^#", title):
+        cprint("Title is missing # at the begin of the line", "red")
+        print("\t{}".format(title))
+    if re.match(r"^##+", title):
+        cprint("Title must have # and not ##, ###, ...", "red")
+        print("\t{}".format(title))
+    if not re.match(r"^#\s+\w", title):
+        cprint("Title is empty", "red")
+        print("\t{}".format(title))
+
+def author_validator(author):
+    if not re.match(r"^#\s|\w", author):
+        cprint("Author must have ## at the begin of the line", "red")
+        print("\t{}".format(author))
+    if re.match(r"^###+", author):
+        cprint("Title must have ## and not ###, ####, ...", "red")
+        print("\t{}".format(author))
+    if not re.match(r'^##\s+Author:\s+\w', author):
+        cprint("Author is empty", "red")
+        print("\t{}".format(author))
+
 
 class NotebookInvalidException(Exception):
     """Exception class for Notebook class"""
@@ -50,9 +75,9 @@ class Notebook(object):
         )
         self.get_metadata()
         self.get_image()
-        self.valid = True if self.validate() else False
+        self.valid = True if self.is_valide() else False
 
-    def get_field_regex(self,path,regex):
+    def get_field_regex(self, path, regex, validator):
         """Retrieve information based on JSON path and regular expression.
 
         :param path: JSON path.
@@ -66,6 +91,8 @@ class Notebook(object):
             m = regex.search(text)
             if m:
                 return m.group(1)
+            else:
+                validator(text)
 
     def get_field_all(self,path):
         """Retrieve information based on JSON.
@@ -133,10 +160,10 @@ class Notebook(object):
         print("Processing {}".format(self.filename))
 
         re_title = re.compile(RE_TITLE, re.MULTILINE)
-        self.title = self.get_field_regex('cells[0].source[0]',re_title)
+        self.title = self.get_field_regex('cells[0].source[0]',re_title, title_validator)
         
         re_author = re.compile(RE_AUTHOR, re.MULTILINE)
-        self.author = self.get_field_regex('cells[1].source[0]',re_author)
+        self.author = self.get_field_regex('cells[1].source[0]',re_author, author_validator)
 
         self.description = self.get_field_all('cells[2].source')
 
@@ -166,7 +193,7 @@ class Notebook(object):
                 }
                 return
 
-    def validate(self):
+    def is_valide(self):
         """Validate the notebook.
 
         :returns: None
@@ -175,6 +202,8 @@ class Notebook(object):
         """
         if not hasattr(self,'image'):
             raise NotebookInvalidException("No image",self)
+
+        return True
 
 
 if __name__ == '__main__':
