@@ -2,6 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <link rel="stylesheet" href="static/style.css"/>
         <script type="text/x-mathjax-config">
@@ -19,13 +20,25 @@
         <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     </head>
     <body>
-        <header>
+        <header id="page-header">
             <h1>Jupyter Interactions</h1>
+            <div class="links">
+                <a href="https://github.com/mikecroucher/jupyter-interactions/blob/master/Readme.md" title="Add a notebook">+</a> <!-- this should go to a "how to submit a notebook" page -->
+                <a href="https://github.com/mikecroucher/jupyter-interactions">GitHub</a>
+            </div>
         </header>
+
         <main>
             {% block content %}
             {% endblock content %}
         </main>
+
+        <footer>
+            Released under a ... licence.
+        </footer>
+
+        {% block scripts %}
+        {% endblock scripts %}
     </body>
 </html>
 
