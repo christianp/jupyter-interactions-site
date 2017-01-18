@@ -6,8 +6,8 @@ This tool builds a website showing off Jupyter interactions, from [mikecroucher/
 
 Here's how to build the site:
 
-* Clone [jupyter-interactions](https://github.com/mikecroucher/jupyter-interactions)
 * Clone this repository.
+* Run `git submodule init` to retrive [jupyter-interactions](https://github.com/mikecroucher/jupyter-interactions)
 * Copy `config.yml.dist` to `config.yml`, and modify the paths as required.
     * `build_path` is where the generated site should go.
     * `notebook_path` is the path to your clone of the jupyter-interactions repository
