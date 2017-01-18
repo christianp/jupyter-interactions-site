@@ -1,5 +1,6 @@
 import codecs
 import json
+import os.path
 import re
 import sys
 
@@ -31,7 +32,7 @@ class NotebookInvalidException(Exception):
 
 class Notebook(object):
     """Represent Notebook"""
-    def __init__(self,filename, file_path="."):
+    def __init__(self, filename, file_dir="."):
         """Init Notebook class.
 
         :param filename: Name of the Jupyter Notebook file.
@@ -41,7 +42,12 @@ class Notebook(object):
 
         """
         self.filename = filename
-        self.data = json.loads(codecs.open(file_path,encoding='utf-8').read())
+        self.data = json.loads(
+            codecs.open(
+                os.path.join(file_dir, filename),
+                encoding='utf-8'
+            ).read()
+        )
         self.get_metadata()
         self.get_image()
         self.valid = True if self.validate() else False

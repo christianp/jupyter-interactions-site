@@ -83,7 +83,7 @@ class NotebookSite(Site):
         for filename in os.listdir(self.notebook_path):
             name,ext = os.path.splitext(filename)
             if ext=='.ipynb' and filename not in self.ignore_notebooks:
-                notebook = Notebook(os.path.join(self.notebook_path,filename),filename)
+                notebook = Notebook(filename, self.notebook_path)
                 self.notebooks.append(notebook)
 
     def build(self):
