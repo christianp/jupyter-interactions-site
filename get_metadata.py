@@ -167,8 +167,7 @@ class Notebook(object):
 
         self.description = self.get_field_all('cells[2].source')
 
-        re_lineitem = re.compile(r'^\*\s+(.*)$',re.MULTILINE)
-        self.references = self.get_field_markdown_list('References',re_lineitem)
+        self.references = self.get_field_all('cells[3].source')
 
         self.keywords = self.get_field_comma_separated_list('Keywords')
         self.requirements = self.get_field_comma_separated_list('Requirements')
