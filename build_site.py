@@ -104,7 +104,7 @@ parser.add_argument('--watch',action='store_true',dest='watch',default=False,hel
 args = parser.parse_args()
 config_file = 'config_{}.yml'.format(args.config) if args.config else 'config.yml'
 
-config = yaml.load(open('config.yml').read())
+config = yaml.load(open(config_file).read())
 site = NotebookSite(**config)
 print('{} notebooks found\n'.format(len(site.notebooks)))
 
