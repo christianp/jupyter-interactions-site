@@ -169,7 +169,8 @@ class Notebook(object):
 
         self.references = self.get_field_all('cells[3].source')
 
-        self.keywords = self.get_field_comma_separated_list('Keywords')
+        self.keywords = self.get_field_all('cells[4].source')
+
         self.requirements = self.get_field_comma_separated_list('Requirements')
 
     def get_image(self):
