@@ -114,3 +114,10 @@ footer {
 main > section ~ section {
     margin-top: 3rem;
 }
+.item header p {
+    margin: 0;
+}
+
+.item .author.none {
+    font-style: italic;
+}
