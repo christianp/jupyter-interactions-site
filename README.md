@@ -1,11 +1,14 @@
 # Tools to build the jupyter-interactions website
 
+This tool builds a website showing off Jupyter interactions, from [mikecroucher/jupyter-interactions](https://github.com/mikecroucher/jupyter-interactions).
+
 Here's how to build the site:
 
-* Clone this repository
+* Clone [jupyter-interactions](https://github.com/mikecroucher/jupyter-interactions)
+* Clone this repository.
 * Copy `config.yml.dist` to `config.yml`, and modify the paths as required.
     * `build_path` is where the generated site should go.
-    * `notebook_path` is the local path to the jupyter-interactions repository
+    * `notebook_path` is the path to your clone of the jupyter-interactions repository
     * `notebook_runner_url` is the root of the URL to run notebooks - the notebook's name will be appended to this to make the link.
     * `ignore_notebooks` is a list of notebook files to ignore.
 * Install the dependencies with 
