@@ -2,7 +2,6 @@ import json
 import re
 import jmespath
 import codecs
-from markdown_mistune import markdown2html_mistune
 
 def handle_svg(data):
     source = ''.join(data)
@@ -36,24 +35,55 @@ class Notebook(object):
         except NotebookInvalidException:
             self.valid = False
 
+    def get_field_regex(self,path,regex):
+        text = jmespath.search(path,self.data)
+        if text:
+            m = regex.search(text)
+            if m:
+                return m.group(1)
+
+    def get_field_all(self,path):
+        lines = jmespath.search(path,self.data)
+        if lines:
+            return ''.join(lines)
+
+    def get_field_with_header(self,header):
+        re_header = re.compile('^###\s+(.*)$',re.MULTILINE)
+        for lines in jmespath.search('cells[*].source',self.data):
+            text = ''.join(lines)
+            m = re_header.match(text)
+            if m and m.group(1)==header:
+                return text
+
+    def get_field_markdown_list(self,header,regex):
+        text = self.get_field_with_header(header)
+        if text:
+            return regex.findall(text)
+        else:
+            return []
+
+    def get_field_comma_separated_list(self,header):
+        text = self.get_field_with_header(header)
+        if text:
+            return sum((l.split(',') for l in text.split('\n')[1:]),[])
+        else:
+            return []
+
     def get_metadata(self):
+        print(self.filename)
         re_title = re.compile(r'^#\s+(.*)$',re.MULTILINE)
         re_author = re.compile(r'^##\s+Author:\s+(.*)$',re.MULTILINE)
 
-        title_text = jmespath.search('cells[0].source[0]',self.data)
-        if title_text:
-            m = re_title.search(title_text)
-            if m:
-                self.title = m.group(1)
+        self.title = self.get_field_regex('cells[0].source[0]',re_title)
+        self.author = self.get_field_regex('cells[1].source[0]',re_author)
 
-        author_text = jmespath.search('cells[1].source[0]',self.data)
-        m = re_author.search(author_text)
-        if m:
-            self.author = m.group(1)
+        self.description = self.get_field_all('cells[2].source')
 
-        description_text = jmespath.search('cells[2].source',self.data)
-        if description_text:
-            self.description = markdown2html_mistune(''.join(description_text))
+        re_lineitem = re.compile(r'^\*\s+(.*)$',re.MULTILINE)
+        self.references = self.get_field_markdown_list('References',re_lineitem)
+
+        self.keywords = self.get_field_comma_separated_list('Keywords')
+        self.requirements = self.get_field_comma_separated_list('Requirements')
 
     def get_image(self):
         for output in jmespath.search('cells[].outputs[].data',self.data):
