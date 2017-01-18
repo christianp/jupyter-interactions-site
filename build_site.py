@@ -3,6 +3,7 @@ import jinja2
 import shutil
 from get_metadata import Notebook
 from distutils.dir_util import copy_tree
+from markdown_mistune import markdown2html_mistune
 import yaml
 import codecs
 import argparse
@@ -19,12 +20,12 @@ class EventHandler(FileSystemEventHandler):
         if not re.match(r'.*\d+$',event.src_path):
             super(EventHandler,self).dispatch(event)
 
-    def on_created(self,event):
-        print(event.src_path)
+    def on_modified(self,event):
+        print("File changed: {}".format(event.src_path))
         self.site.build()
 
 class Site(object):
-    def __init__(self,build_path='build',template_path='templates',static_path='static',site_context={}):
+    def __init__(self,build_path='build',template_path='templates',static_path='static',site_context={},**kwargs):
         self.build_path = build_path
         try:
             os.mkdir(self.build_path)
@@ -37,6 +38,7 @@ class Site(object):
 
         self.template_path = template_path
         self.env = jinja2.Environment(loader=jinja2.FileSystemLoader(self.template_path))
+        self.env.filters['markdown'] = markdown2html_mistune
 
     def make_file(self,template_name,destination,context):
         template = self.env.get_template(template_name)
@@ -57,19 +59,21 @@ class Site(object):
 
         for path in [self.template_path,self.static_path]:
             observer.schedule(event_handler,path,recursive=True)
-            observer.start()
-            print("Watching for changes...")
 
-            try:
-                while True:
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                observer.stop()
-            observer.join()
+        observer.start()
+        print("Watching for changes...")
+
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
 
 class NotebookSite(Site):
     def __init__(self,notebook_path='.',*args,**kwargs):
         self.notebook_path = notebook_path
+        self.ignore_notebooks = kwargs.get('ignore_notebooks',[])
         super(NotebookSite,self).__init__(*args,**kwargs)
         self.load_notebooks()
 
@@ -78,7 +82,7 @@ class NotebookSite(Site):
         self.notebooks = []
         for filename in os.listdir(self.notebook_path):
             name,ext = os.path.splitext(filename)
-            if ext=='.ipynb':
+            if ext=='.ipynb' and filename not in self.ignore_notebooks:
                 notebook = Notebook(os.path.join(self.notebook_path,filename),filename)
                 self.notebooks.append(notebook)
 

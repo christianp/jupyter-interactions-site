@@ -2,3 +2,5 @@ build_path: site
 notebook_path: ../jupyter-interactions
 site_context:
     notebook_runner_url: http://localhost:8888/notebooks/jupyter-interactions/
+ignore_notebooks:
+    - template.ipynb
