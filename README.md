@@ -2,6 +2,8 @@
 
 This tool builds a website showing off Jupyter interactions, from [mikecroucher/jupyter-interactions](https://github.com/mikecroucher/jupyter-interactions).
 
+**You can see the gallery at [mikecroucher.github.io/jupyter-interactions/](https://mikecroucher.github.io/jupyter-interactions/)
+
 Here's how to build the site:
 
 * Clone [jupyter-interactions](https://github.com/mikecroucher/jupyter-interactions)
