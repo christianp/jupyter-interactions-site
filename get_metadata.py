@@ -3,13 +3,9 @@ import json
 import os.path
 import re
 import sys
+import inspect
 
 import jmespath
-from termcolor import cprint
-
-
-RE_TITLE = r'^#\s+(.+)$'
-RE_AUTHOR =r'^##\s+Author:\s+(.+)$'  # TODO Support more than one author
 
 def handle_svg(data):
     source = ''.join(data)
@@ -23,39 +19,174 @@ image_handlers = {
     'image/png': handle_png,
 }
 
-def title_validator(title):
-    if not re.match(r"^#", title):
-        cprint("Title is missing # at the begin of the line", "red")
-        print("\t{}".format(title))
-    if re.match(r"^##+", title):
-        cprint("Title must have # and not ##, ###, ...", "red")
-        print("\t{}".format(title))
-    if not re.match(r"^#\s+\w", title):
-        cprint("Title is empty", "red")
-        print("\t{}".format(title))
+def truncate(text, length=30):
+    text = str(text)
+    if len(text)>length-4:
+        return text[:length-4]+' ...'
+    else:
+        return text
 
-def author_validator(author):
-    if not re.match(r"^#\s|\w", author):
-        cprint("Author must have ## at the begin of the line", "red")
-        print("\t{}".format(author))
-    if re.match(r"^###+", author):
-        cprint("Title must have ## and not ###, ####, ...", "red")
-        print("\t{}".format(author))
-    if not re.match(r'^##\s+Author:\s+\w', author):
-        cprint("Author is empty", "red")
-        print("\t{}".format(author))
+class Field(object):
+    is_valid = False
+    notebook = None
 
+    def __init__(self, name, path, validator=None, *args, **kwargs):
+        self.__init_args = args
+        self.__init_kwargs = kwargs
+        self.name = name
+        self.path = path
+        self.extra_validator = validator
+
+    def bind(self,notebook):
+        f2 = type(self)(self.name,self.path,validator=self.extra_validator,*self.__init_args,**self.__init_kwargs)
+        f2.notebook = notebook
+        return f2
+
+    def __str__(self):
+        try:
+            v = self.value
+            return 'Field {}: {}'.format(self.name, truncate(v))
+        except FieldInvalidException as e:
+            return 'Field {} (invalid): {}'.format(self.name, e)
+
+    def __repr__(self):
+        return str(self)
+
+    @property
+    def value(self):
+
+        try:
+            v = self.load()
+            v = self.clean(v)
+            if self.extra_validator:
+                v = self.extra_validator(v)
+            return v
+        except FieldInvalidException as e:
+            e.field = self
+            raise e
+
+    def load(self):
+        """
+            Load the raw value for this field from the notebook
+        """
+        return jmespath.search(self.path, self.notebook.data)
+
+    def clean(self, v):
+        """
+            Validate and process the value loaded from the notebook
+        """
+        return v
+
+class MultilineField(Field):
+    def load(self):
+        lines = super(MultilineField, self).load()
+        try:
+            return ''.join(lines)
+        except TypeError:
+            raise FieldInvalidException(lines, "not an iterable")
+
+class FieldWithHeaderMixin(object):
+    re_header = re.compile('^(#+)\s+(.*)$', re.MULTILINE)
+
+    def __init__(self, *args, **kwargs):
+        super(FieldWithHeaderMixin, self).__init__(*args, **kwargs)
+        self.header_level = kwargs.get('header_level', 1)
+        self.return_header = kwargs.get('return_header', False)
+
+    def clean(self, v):
+        v = super(FieldWithHeaderMixin, self).clean(v)
+
+        header_level_md = '#'*self.header_level
+
+        m = self.re_header.match(v)
+        if not m:
+            raise FieldInvalidException(v, "must begin with a header", suggestion = '# {}'.format(v))
+        if len(m.group(1)) != self.header_level:
+            raise FieldInvalidException(v,
+                "header level must be {}".format(header_level_md), 
+                suggestion='{} {}'.format(header_level_md, m.group(2))
+            )
+
+        if self.return_header:
+            text = m.group(2)
+            if not text:
+                raise FieldInvalidException(v, "header is empty", suggestion = '{} xxx'.format(header_level_md))
+            return m.group(2)
+        else:
+            return v[m.end()+1:]
+
+class SingleLineHeaderField(FieldWithHeaderMixin, Field):
+    pass
+
+class ListFieldMixin(object):
+    re_list_item = re.compile(r'^[-*]\s+(.*)$', re.MULTILINE)
+
+    def clean(self, v):
+        v = super(ListFieldMixin, self).clean(v)
+        return self.re_list_item.findall(v)
+
+class ListFieldWithHeader(ListFieldMixin, FieldWithHeaderMixin, MultilineField):
+    pass
+
+class CommaSeparatedListFieldMixin(object):
+    def clean(self, v):
+        v = super(FieldCommaSeparatedListMixin, self).clean(v)
+        return v.split(',')
+
+class ImageField(Field):
+    def clean(self, v):
+        for output in v:
+            mime_types = [k for k in output if k in image_handlers]
+            if len(mime_types):
+                mime_type = mime_types[0]
+                image_data = output[mime_type]
+                image_tag = image_handlers[mime_type](image_data)
+                return {
+                    'mime_type': mime_type,
+                    'image_data': image_data,
+                    'html': image_tag,
+                }
+        raise FieldInvalidException(v,'none of the supported image types present: {}'.format(', '.join(image_handlers.keys())))
+
+def author_validator(text):
+    re_author = re.compile(r'^Author:\s+(.*)$')
+    m = re_author.match(text)
+    if not m:
+        raise FieldInvalidException(v, "wrong format", suggestion="Author: {}".format(text))
+    else:
+        return m.group(1)
+
+class FieldInvalidException(Exception):
+    def __init__(self, value, message, suggestion='', field=None):
+        self.value = value
+        self.message = message
+        self.suggestion = suggestion
+        self.field = field
+
+    def __str__(self):
+        s = "{} is invalid: {}".format(self.field.name, self.message)
+        if self.suggestion:
+            s += "\nTry:\n\t{}\nCurrent value:\n{}".format(self.suggestion, self.value)
+        return s
 
 class NotebookInvalidException(Exception):
     """Exception class for Notebook class"""
-    def __init__(self,message,notebook):
+    def __init__(self, message, notebook):
         self.notebook = notebook
         self.message = message
 
     def __str__(self):
-        return 'Notebook "{}" is invalid: {}'.format(self.notebook.filename, self.message)
+        return 'Notebook "{}" is invalid:\n{}'.format(self.notebook.filename, self.message)
 
 class Notebook(object):
+    title = SingleLineHeaderField('title', 'cells[0].source[0]', header_level=1, return_header=True)
+    author = SingleLineHeaderField('author', 'cells[1].source[0]', header_level=2, return_header=True, validator=author_validator)
+    description = MultilineField('description', 'cells[2].source')
+    references = ListFieldWithHeader('references', 'cells[4].source', header_level=3)
+    keywords = ListFieldWithHeader('keywords', 'cells[5].source', header_level=3)
+    requirements = ListFieldWithHeader('requirements', 'cells[6].source', header_level=3)
+    image = ImageField('image', 'cells[].outputs[].data')
+
     """Represent Notebook"""
     def __init__(self, filename, file_dir="."):
         """Init Notebook class.
@@ -73,105 +204,17 @@ class Notebook(object):
                 encoding='utf-8'
             ).read()
         )
-        self.get_metadata()
-        self.get_image()
-        self.valid = True if self.is_valide() else False
 
-    def get_field_regex(self, path, regex, validator):
-        """Retrieve information based on JSON path and regular expression.
+        self.make_fields()
 
-        :param path: JSON path.
-        :param regex: Regular expression.
-        :returns: Information find on the JSON path matching the regular expression.
-        :rtype: str
+    def get_fields(self):
+        for member, value in inspect.getmembers(self):
+            if isinstance(value, Field):
+                yield value
 
-        """
-        text = jmespath.search(path,self.data)
-        if text:
-            m = regex.search(text)
-            if m:
-                return m.group(1)
-            else:
-                validator(text)
-
-    def get_field_all(self,path):
-        """Retrieve information based on JSON.
-
-        :param path: JSON path.
-        :returns: Information find on the JSON path.
-        :rtype: str
-
-        """
-        lines = jmespath.search(path,self.data)
-        if lines:
-            return ''.join(lines)
-
-    def get_field_with_header(self,header):
-        """Retrieve information from one header
-
-        :param header: Header name.
-        :returns: Information under the wanted header.
-        :rtype: str
-
-        """
-        re_header = re.compile('^###\s+(.*)$',re.MULTILINE)
-        for lines in jmespath.search('cells[*].source',self.data):
-            text = ''.join(lines)
-            m = re_header.match(text)
-            if m and m.group(1)==header:
-                return text
-
-    def get_field_markdown_list(self,header,regex):
-        """Return list text from markdown cell.
-
-        :param header: Header name.
-        :param regex: Regular expression.
-        :returns: List as text.
-        :rtype: str
-
-        """
-        text = self.get_field_with_header(header)
-        if text:
-            return regex.findall(text)
-        else:
-            return []
-
-    def get_field_comma_separated_list(self,header):
-        """Information as comma separated list
-
-        :param header: Header name.
-        :returns: List.
-        :rtype: list
-
-        """
-        text = self.get_field_with_header(header)
-        if text:
-            return sum((l.split(',') for l in text.split('\n')[1:]),[])
-        else:
-            return []
-
-    def get_metadata(self):
-        """Retrieve the metadata from the demo.
-
-        :returns: None
-        :rtype: None
-
-        """
-        print("Processing {}".format(self.filename))
-
-        re_title = re.compile(RE_TITLE, re.MULTILINE)
-        self.title = self.get_field_regex('cells[0].source[0]',re_title, title_validator)
-        
-        re_author = re.compile(RE_AUTHOR, re.MULTILINE)
-        self.author = self.get_field_regex('cells[1].source[0]',re_author, author_validator)
-
-        self.description = self.get_field_all('cells[2].source')
-
-        self.references = self.get_field_all('cells[3].source')
-
-        self.keywords = self.get_field_all('cells[4].source')
-
-        self.requirements = self.get_field_all('cells[5].source')
+    def make_fields(self):
+        for field in self.get_fields():
+            setattr(self,field.name, field.bind(self))
 
     def get_image(self):
         """Get the image to use as thumbnail.
@@ -180,7 +223,7 @@ class Notebook(object):
         :rtype: None
 
         """
-        for output in jmespath.search('cells[].outputs[].data',self.data):
+        for output in jmespath.search('cells[].outputs[].data', self.data):
             mime_types = [k for k in output if k in image_handlers]
             if len(mime_types):
                 mime_type = mime_types[0]
@@ -193,21 +236,43 @@ class Notebook(object):
                 }
                 return
 
-    def is_valide(self):
+    def is_valid(self):
         """Validate the notebook.
 
         :returns: None
         :rtype: None
 
         """
-        if not hasattr(self,'image'):
-            raise NotebookInvalidException("No image",self)
+
+        errors = []
+
+        for field in self.get_fields():
+            try:
+                field.value
+            except FieldInvalidException as e:
+                try:
+                    str(e)
+                except Exception:
+                    print(field.name)
+                errors.append('* {}'.format(e))
+
+        if len(errors):
+            raise NotebookInvalidException('\n'.join(errors), self)
 
         return True
 
+    def valid(self):
+        try:
+            self.is_valid()
+            return True
+        except NotebookInvalidException:
+            return False
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        Notebook(sys.argv[1])
+        nb = Notebook(sys.argv[1])
+        if nb.is_valid():
+            print("valid")
+        print(type(nb.keywords)())
     else:
         print("Missing file")

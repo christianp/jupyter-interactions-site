@@ -14,11 +14,11 @@
         <ul id="items">
             {% for notebook in notebooks %}
             {% if notebook.valid %}
-            <li class="item" data-keywords="{% if notebook.keywords|length %}{{notebook.keywords|join(',')}}{% endif %}">
+            <li class="item" data-keywords="{% if notebook.keywords.value|length %}{{notebook.keywords.value|join(',')}}{% endif %}">
                 <header>
-                    <h1 class="title"><a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.title|default('Untitled')|markdown}}</a></h1>
-                    {% if notebook.author %}
-                        <h2 class="author">{{notebook.author|markdown}}</h2>
+                    <h1 class="title"><a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.title.value|default('Untitled')|markdown}}</a></h1>
+                    {% if notebook.author.value %}
+                        <h2 class="author">{{notebook.author.value|markdown}}</h2>
                     {% else %}
                         <h2 class="author none">No author specified</h2>
                     {% endif %}
@@ -26,16 +26,16 @@
                 <div class="content">
                     {% if notebook.image %}
                     <div class="image">
-                        <a title="Open the {{notebook.title}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.html|safe}}</a>
+                        <a title="Open the {{notebook.title.value}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.value.html|safe}}</a>
                     </div>
                     {% endif %}
-                    {% if notebook.description %}<div class="description clearfix">{{notebook.description|markdown}}</div>{% endif %}
+                    {% if notebook.description.value %}<div class="description clearfix">{{notebook.description.value|markdown}}</div>{% endif %}
                     
-                    {% if notebook.references|length %}
+                    {% if notebook.references.value|length %}
                     <div class="references">
                         <h3>References</h3>
                         <ul>
-                            {% for ref in notebook.references %}
+                            {% for ref in notebook.references.value %}
                             <li>{{ref|markdown}}</li>
                             {% endfor %}
                         </ul>

@@ -85,8 +85,9 @@ class NotebookSite(Site):
             if ext=='.ipynb' and filename not in self.ignore_notebooks:
                 try:
                     notebook = Notebook(filename, self.notebook_path)
+                    notebook.is_valid()
                     self.notebooks.append(notebook)
-                except NotebookInvalidException:
+                except NotebookInvalidException as e:
                     print("Notebook {} is invalid".format(filename))
 
     def build(self):
@@ -106,7 +107,10 @@ config_file = 'config_{}.yml'.format(args.config) if args.config else 'config.ym
 
 config = yaml.load(open(config_file).read())
 site = NotebookSite(**config)
-print('{} notebooks found\n'.format(len(site.notebooks)))
+print('\n{} notebooks found:'.format(len(site.notebooks)))
+for notebook in site.notebooks:
+    print(notebook.filename,notebook.keywords)
+print('')
 
 if args.watch:
     site.watch()
