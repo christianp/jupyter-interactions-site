@@ -3,7 +3,7 @@ import jinja2
 import shutil
 from get_metadata import Notebook, NotebookInvalidException
 from distutils.dir_util import copy_tree
-from markdown_mistune import markdown2html_mistune
+from nbconvert.filters.markdown_mistune import markdown2html_mistune
 import yaml
 import codecs
 import argparse

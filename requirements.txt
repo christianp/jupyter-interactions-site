@@ -5,3 +5,4 @@ jupyter
 mistune
 termcolor
 watchdog==0.8.3
+nbconvert==5.0.0
