@@ -1,7 +1,7 @@
 import os
 import jinja2
 import shutil
-from get_metadata import Notebook
+from get_metadata import Notebook, NotebookInvalidException
 from distutils.dir_util import copy_tree
 from markdown_mistune import markdown2html_mistune
 import yaml
@@ -83,17 +83,18 @@ class NotebookSite(Site):
         for filename in os.listdir(self.notebook_path):
             name,ext = os.path.splitext(filename)
             if ext=='.ipynb' and filename not in self.ignore_notebooks:
-                notebook = Notebook(os.path.join(self.notebook_path,filename),filename)
-                self.notebooks.append(notebook)
+                try:
+                    notebook = Notebook(filename, self.notebook_path)
+                    notebook.is_valid()
+                    self.notebooks.append(notebook)
+                except NotebookInvalidException as e:
+                    print("Notebook {} is invalid".format(filename))
 
     def build(self):
         print('Building in {}'.format(self.build_path))
 
         super(NotebookSite,self).build()
         site.make_file('index.html','index.html',{'notebooks':self.notebooks})
-
-        for notebook in self.notebooks:
-            pass
 
         print("Success!")
 
@@ -106,7 +107,10 @@ config_file = 'config_{}.yml'.format(args.config) if args.config else 'config.ym
 
 config = yaml.load(open(config_file).read())
 site = NotebookSite(**config)
-print('{} notebooks found\n'.format(len(site.notebooks)))
+print('\n{} notebooks found:'.format(len(site.notebooks)))
+for notebook in site.notebooks:
+    print(notebook.filename,notebook.keywords)
+print('')
 
 if args.watch:
     site.watch()

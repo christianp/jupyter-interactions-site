@@ -16,7 +16,6 @@
         </div>
 
         <div class="card-columns" id="items">
-            <div class="">
             <div class="card item" data-keywords="">
                 <div class="card-block">
                     <h4 class="card-title">
@@ -30,34 +29,32 @@
                     <p class="card-text">Go to <a href="https://github.com/mikecroucher/jupyter-interactions">our GitHub repository</a> to get started.</p>
                 </div>
             </div>
-            </div>
             {% for notebook in notebooks %}
             {% if notebook.valid %}
-            <div class="">
-            <div class="item card" data-keywords="{% if notebook.keywords|length %}{{notebook.keywords|join(',')}}{% endif %}">
-                {% if notebook.image %}
+            <div class="item card" data-keywords="{% if notebook.keywords.value|length %}{{notebook.keywords.value|join(',')}}{% endif %}">
+                {% if notebook.image.value %}
                 <div class="card-img-top">
-                    <a title="Open the {{notebook.title}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.html|safe}}</a>
+                    <a title="Open the {{notebook.title.value}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.value.html|safe}}</a>
                 </div>
                 {% endif %}
                 <div class="card-block">
                     <h4 class="card-title">
-                        <a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.title|default('Untitled')|markdown}}</a>
+                        <a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.title.value|default('Untitled')|markdown}}</a>
                         <br>
-                        {% if notebook.author %}
-                            <small class="author">{{notebook.author|markdown}}</small>
+                        {% if notebook.author.value %}
+                            <small class="author">{{notebook.author.value|markdown}}</small>
                         {% else %}
                             <small class="author none">No author specified</small>
                         {% endif %}
                     </h4>
                     <div class="card-text">
-                        {% if notebook.description %}<div class="description clearfix">{{notebook.description|markdown}}</div>{% endif %}
+                        {% if notebook.description.value %}<div class="description clearfix">{{notebook.description.value|markdown}}</div>{% endif %}
                         
-                        {% if notebook.references|length %}
+                        {% if notebook.references.value|length %}
                         <div class="references">
                             <h3>References</h3>
                             <ul>
-                                {% for ref in notebook.references %}
+                                {% for ref in notebook.references.value %}
                                 <li>{{ref|markdown}}</li>
                                 {% endfor %}
                             </ul>
@@ -66,9 +63,8 @@
                     </div>
                 </div>
                 <div class="card-footer">
-                    <strong>Keywords:</strong> {% if notebook.keywords|length %}{{notebook.keywords|join(', ') }}{% else %}<em>None specified</em>{% endif %}
+                    <strong>Keywords:</strong> {% if notebook.keywords.value|length %}{{notebook.keywords.value|join(', ') }}{% else %}<em>None specified</em>{% endif %}
                 </div>
-            </div>
             </div>
             {% endif %}
             {% endfor %}
