@@ -156,6 +156,9 @@ def author_validator(text):
     else:
         return m.group(1)
 
+def indent(text,level='\t'):
+    return '\n'.join(level+line for line in text.split('\n'))
+
 class FieldInvalidException(Exception):
     def __init__(self, value, message, suggestion='', field=None):
         self.value = value
@@ -166,7 +169,7 @@ class FieldInvalidException(Exception):
     def __str__(self):
         s = "{} is invalid: {}".format(self.field.name, self.message)
         if self.suggestion:
-            s += "\nTry:\n\t{}\nCurrent value:\n{}".format(self.suggestion, self.value)
+            s += "\nTry:\n\t{}\nCurrent value:\n{}".format(self.suggestion, indent(self.value))
         return s
 
 class NotebookInvalidException(Exception):
@@ -236,7 +239,7 @@ class Notebook(object):
                 }
                 return
 
-    def is_valid(self):
+    def validate(self):
         """Validate the notebook.
 
         :returns: None
@@ -261,12 +264,19 @@ class Notebook(object):
 
         return True
 
-    def valid(self):
+    def is_valid(self):
         try:
-            self.is_valid()
+            self.validate()
             return True
         except NotebookInvalidException:
             return False
+
+    def errors(self):
+        try:
+            self.validate()
+            return ''
+        except NotebookInvalidException as e:
+            return str(e)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

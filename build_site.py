@@ -11,17 +11,19 @@ import time
 import re
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import http.server
 
 class EventHandler(FileSystemEventHandler):
     def __init__(self,site):
         self.site = site
 
     def dispatch(self,event):
-        if not re.match(r'.*\d+$',event.src_path):
+        if not (os.path.isdir(event.src_path) or re.match(r'.*\d+$',event.src_path)):
             super(EventHandler,self).dispatch(event)
 
     def on_modified(self,event):
         print("File changed: {}".format(event.src_path))
+        os.chdir(self.site.cwd)
         self.site.build()
 
 class Site(object):
@@ -63,42 +65,55 @@ class Site(object):
         observer.start()
         print("Watching for changes...")
 
+        server_address = ('', 8000)
+        httpd = http.server.HTTPServer(server_address, http.server.SimpleHTTPRequestHandler)
+        httpd.timeout = 1
+        self.cwd = os.getcwd()
+        serve_path = os.path.join(self.cwd,self.build_path)
         try:
             while True:
-                time.sleep(1)
+                os.chdir(serve_path)
+                httpd.handle_request()
         except KeyboardInterrupt:
             observer.stop()
         observer.join()
 
 class NotebookSite(Site):
-    def __init__(self,notebook_path='.',*args,**kwargs):
-        self.notebook_path = notebook_path
+    def __init__(self,*args,**kwargs):
+        self.notebook_path = kwargs.get('notebook_path','.')
         self.ignore_notebooks = kwargs.get('ignore_notebooks',[])
         self.verbose = kwargs.get('verbose',False)
+        self.config = kwargs
         super(NotebookSite,self).__init__(*args,**kwargs)
         self.load_notebooks()
 
     def load_notebooks(self):
         print("Loading notebooks...")
         self.notebooks = []
+
         for filename in os.listdir(self.notebook_path):
             name,ext = os.path.splitext(filename)
             if ext=='.ipynb' and filename not in self.ignore_notebooks:
-                try:
-                    notebook = Notebook(filename, self.notebook_path)
-                    notebook.is_valid()
-                    self.notebooks.append(notebook)
-                except NotebookInvalidException as e:
-                    if self.verbose:
-                        print(e)
-                    else:
-                        print("Notebook {} is invalid".format(filename))
+                notebook = Notebook(filename, self.notebook_path)
+                self.notebooks.append(notebook)
+
+        num_valid = len([nb for nb in self.notebooks if nb.is_valid()])
+        num_invalid = len(self.notebooks) - num_valid
+
+        print('\n{} notebooks found.'.format(len(self.notebooks)))
+
+        if num_invalid:
+            print("1 notebook is invalid." if num_invalid==1 else '{} notebooks are invalid.'.format(num_invalid))
+            print("To see error messages, open {}/errors.html\n".format(self.build_path))
 
     def build(self):
         print('Building in {}'.format(self.build_path))
 
         super(NotebookSite,self).build()
-        site.make_file('index.html','index.html',{'notebooks':self.notebooks})
+
+        context = {'config': self.config, 'notebooks':self.notebooks}
+        self.make_file('index.html','index.html', context)
+        self.make_file('errors.html','errors.html', context)
 
         print("Success!")
 
@@ -112,12 +127,10 @@ config_file = 'config_{}.yml'.format(args.config) if args.config else 'config.ym
 
 config = yaml.load(open(config_file).read())
 site = NotebookSite(verbose=args.verbose,**config)
-print('\n{} notebooks found:'.format(len(site.notebooks)))
-for notebook in site.notebooks:
-    print(notebook.filename,notebook.keywords)
-print('')
 
 if args.watch:
+    site.build()
+    print("Open http://localhost:8000 in your browser\n")
     site.watch()
 else:
     site.build()

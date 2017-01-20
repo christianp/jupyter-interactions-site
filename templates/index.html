@@ -30,7 +30,7 @@
                 </div>
             </div>
             {% for notebook in notebooks %}
-            {% if notebook.valid %}
+            {% if notebook.is_valid() %}
             <div class="item card" data-keywords="{% if notebook.keywords.value|length %}{{notebook.keywords.value|join(',')}}{% endif %}">
                 {% if notebook.image.value %}
                 <div class="card-img-top">

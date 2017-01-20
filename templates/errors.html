@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% for notebook in notebooks %}
+{% if not notebook.is_valid() %}
+<div class="card">
+    <div class="card-block">
+        <h4 class="card-title">
+            <a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.filename}}</a>
+        </h4>
+        <div class="card-text">
+            <pre>{{notebook.errors()}}</pre>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock content %}

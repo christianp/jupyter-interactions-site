@@ -4,10 +4,10 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
+        <title>{{title|default('Jupyter Interactions')}}</title>
+
         <link rel="stylesheet" href="static/bootstrap/css/bootstrap.min.css"/>
         <link rel="stylesheet" href="static/style.css"/>
-
-        <script src="static/bootstrap/js/bootstrap.min.js"></script>
 
         <script type="text/x-mathjax-config">
           MathJax.Hub.Config({
@@ -26,7 +26,7 @@
     <body>
         <nav class="navbar navbar-toggleable-md navbar-light bg-faded" id="page-header">
             <header role="header">
-                <h1 class="navbar-brand">Jupyter Interactions</h1>
+                <h1 class="navbar-brand"><a href="{{config.root_url}}">Jupyter Interactions</a></h1>
             </header>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav" role="navigation">
@@ -46,8 +46,10 @@
             {% endblock content %}
         </main>
 
-        <footer role="contentinfo">
-            Released under a ... licence.
+        <footer role="contentinfo" class="text-muted">
+            <div class="container">
+                <p>Released under a ... licence.</p>
+            </div>
         </footer>
 
         {% block scripts %}
