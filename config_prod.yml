@@ -1,0 +1,6 @@
+build_path: site
+notebook_path: ..
+site_context:
+    notebook_runner_url: https://github.com/mikecroucher/jupyter-interactions/blob/master/
+ignore_notebooks:
+    - template.ipynb
