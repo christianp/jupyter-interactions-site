@@ -83,7 +83,7 @@ class MultilineField(Field):
         try:
             return ''.join(lines)
         except TypeError:
-            raise FieldInvalidException(lines, "not an iterable")
+            raise FieldInvalidException(lines, "{} is {}, not an iterable".format(self.path,type(lines)))
 
 class FieldWithHeaderMixin(object):
     re_header = re.compile('^(#+)\s+(.*)$', re.MULTILINE)
@@ -171,12 +171,12 @@ class FieldInvalidException(Exception):
 
 class NotebookInvalidException(Exception):
     """Exception class for Notebook class"""
-    def __init__(self, message, notebook):
+    def __init__(self, errors, notebook):
         self.notebook = notebook
-        self.message = message
+        self.errors = errors
 
     def __str__(self):
-        return 'Notebook "{}" is invalid:\n{}'.format(self.notebook.filename, self.message)
+        return 'Notebook "{}" is invalid:\n{}'.format(self.notebook.filename, '\n'.join('* {}'.format(e) for e in self.errors))
 
 class Notebook(object):
     title = SingleLineHeaderField('title', 'cells[0].source[0]', header_level=1, return_header=True)
@@ -254,10 +254,10 @@ class Notebook(object):
                     str(e)
                 except Exception:
                     print(field.name)
-                errors.append('* {}'.format(e))
+                errors.append(e)
 
         if len(errors):
-            raise NotebookInvalidException('\n'.join(errors), self)
+            raise NotebookInvalidException(errors, self)
 
         return True
 
@@ -273,6 +273,5 @@ if __name__ == '__main__':
         nb = Notebook(sys.argv[1])
         if nb.is_valid():
             print("valid")
-        print(type(nb.keywords)())
     else:
         print("Missing file")

@@ -74,6 +74,7 @@ class NotebookSite(Site):
     def __init__(self,notebook_path='.',*args,**kwargs):
         self.notebook_path = notebook_path
         self.ignore_notebooks = kwargs.get('ignore_notebooks',[])
+        self.verbose = kwargs.get('verbose',False)
         super(NotebookSite,self).__init__(*args,**kwargs)
         self.load_notebooks()
 
@@ -88,7 +89,10 @@ class NotebookSite(Site):
                     notebook.is_valid()
                     self.notebooks.append(notebook)
                 except NotebookInvalidException as e:
-                    print("Notebook {} is invalid".format(filename))
+                    if self.verbose:
+                        print(e)
+                    else:
+                        print("Notebook {} is invalid".format(filename))
 
     def build(self):
         print('Building in {}'.format(self.build_path))
@@ -101,12 +105,13 @@ class NotebookSite(Site):
 parser = argparse.ArgumentParser(description='Build the jupyter-interactions site')
 parser.add_argument('--config',dest='config',default='',help='name of the config file to use')
 parser.add_argument('--watch',action='store_true',dest='watch',default=False,help='Automatically rebuild when a file is changed')
+parser.add_argument('--verbose',action='store_true',dest='verbose',default=False,help='Give more verbose output')
 
 args = parser.parse_args()
 config_file = 'config_{}.yml'.format(args.config) if args.config else 'config.yml'
 
 config = yaml.load(open(config_file).read())
-site = NotebookSite(**config)
+site = NotebookSite(verbose=args.verbose,**config)
 print('\n{} notebooks found:'.format(len(site.notebooks)))
 for notebook in site.notebooks:
     print(notebook.filename,notebook.keywords)
