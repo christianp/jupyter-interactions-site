@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <section id="intro" class="jumbotron">
+    <section id="intro" class="jumbotron container">
         <h1 class="display-3">Jupyter Interactions</h1>
         <p class="lead">A repository of Jupyter notebooks that demonstrate something using ipywidgets.</p>
         <p>All contributed notebooks should follow the template laid out in template.ipynb</p>
@@ -73,5 +73,5 @@
 {% endblock content %}
 
 {% block scripts %}
-    <script src="static/gallery.js"></script>
+    <script src="{{config.root_url}}static/gallery.js"></script>
 {% endblock scripts %}

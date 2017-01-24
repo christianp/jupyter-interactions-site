@@ -43,6 +43,13 @@ class Site(object):
         self.env.filters['markdown'] = markdown2html_mistune
 
     def make_file(self,template_name,destination,context):
+        destination = os.path.join(self.build_path, destination)
+        _,end = os.path.split(destination)
+        if end != 'index.html':
+            fname, ext = os.path.splitext(destination)
+            os.makedirs(fname, exist_ok=True)
+            destination = os.path.join(fname, 'index.html')
+
         template = self.env.get_template(template_name)
         ctx = {}
         ctx.update({'site':self.site_context})
@@ -112,8 +119,10 @@ class NotebookSite(Site):
         super(NotebookSite,self).build()
 
         context = {'config': self.config, 'notebooks':self.notebooks}
-        self.make_file('index.html','index.html', context)
-        self.make_file('errors.html','errors.html', context)
+
+        files = ['index.html','errors.html','about.html']
+        for filename in files:
+            self.make_file(filename, filename, context)
 
         print("Success!")
 
