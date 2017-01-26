@@ -27,18 +27,15 @@ class EventHandler(FileSystemEventHandler):
         self.site.build()
 
 def notebook_json(notebook):
-    try:
-        return {
-            'title': notebook.title.value,
-            'author': notebook.author.value,
-            'description': notebook.description.value,
-            'references': notebook.references.value,
-            'keywords': notebook.keywords.value,
-            'requirements': notebook.requirements.value,
-            'filename': notebook.filename,
-        }
-    except FieldInvalidException:
-        return {}
+    return {
+        'title': notebook.title,
+        'author': notebook.author,
+        'description': notebook.description,
+        'references': notebook.references,
+        'keywords': notebook.keywords,
+        'requirements': notebook.requirements,
+        'filename': notebook.filename,
+    }
 
 def icon_tag_factory(root_url):
     def icon_tag(name):

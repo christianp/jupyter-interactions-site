@@ -4,19 +4,19 @@
 <div class="container item-page">
     <section class="intro">
         <h2 class="display-2 mb-4">
-            {{notebook.title.value}}
+            {{notebook.title}}
         </h2>
         <h3>
-            {% if notebook.author.value %}
-                <small class="author">{{'user'|icon}}{{notebook.author.value|markdown_inline}}</small>
+            {% if notebook.author %}
+                <small class="author">{{'user'|icon}}{{notebook.author|markdown_inline}}</small>
             {% else %}
                 <small class="author none">No author specified</small>
             {% endif %}
         </h3>
 
-        {% if notebook.image.value %}
+        {% if notebook.image %}
         <div class="item-image my-2 text-center">
-            <a title="Open the {{notebook.title.value}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.value.html|safe}}</a>
+            <a title="Open the {{notebook.title}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.html|safe}}</a>
         </div>
         {% endif %}
 
@@ -28,14 +28,14 @@
     <section class="row">
         <div class="col-12 col-md-8">
             <div class="description">
-                {{notebook.description.value|markdown}}
+                {{notebook.description|markdown}}
             </div>
 
-            {% if notebook.references.value|length %}
+            {% if notebook.references|length %}
             <div class="references">
                 <h3>{{'book'|icon}} References</h3>
                 <ul>
-                    {% for ref in notebook.references.value %}
+                    {% for ref in notebook.references %}
                     <li>{{ref|markdown}}</li>
                     {% endfor %}
                 </ul>
@@ -43,24 +43,24 @@
             {% endif %}
         </div>
         <div class="col-12 col-md-4">
-            {% if notebook.keywords.value|length %}
+            {% if notebook.keywords|length %}
             <div class="keywords card mb-2">
                 <div class="card-block">
                     <h4 class="card-title">{{'book'|icon}} Keywords</h4>
                     <ul >
-                        {% for keyword in notebook.keywords.value %}
+                        {% for keyword in notebook.keywords %}
                         <li>{{keyword}}</li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
             {% endif %}
-            {% if notebook.requirements.value|length %}
+            {% if notebook.requirements|length %}
             <div class="requirements card mb-2">
                 <div class="card-block">
                     <h4 class="card-title">{{'hammer'|icon}} Packages used</h4>
                     <ul >
-                        {% for requirement in notebook.requirements.value %}
+                        {% for requirement in notebook.requirements %}
                         <li><a href="https://pypi.python.org/pypi/{{requirement}}">{{requirement}}</a></li>
                         {% endfor %}
                     </ul>

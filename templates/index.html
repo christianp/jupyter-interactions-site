@@ -34,17 +34,17 @@
             {% if notebook.is_valid() %}
             <div class="col-12 col-md-6 col-lg-4 col-xl-3">
             <div class="item card m-2" data-filename="{{notebook.filename}}">
-                {% if notebook.image.value %}
+                {% if notebook.image %}
                 <div class="card-img-top">
-                    <a title="Open the {{notebook.title.value}} notebook" href="{{config.root_url}}notebooks/{{notebook.slug}}">{{notebook.image.value.html|safe}}</a>
+                    <a title="Open the {{notebook.title}} notebook" href="{{config.root_url}}notebooks/{{notebook.slug}}">{{notebook.image.html|safe}}</a>
                 </div>
                 {% endif %}
                 <div class="card-block">
                     <h4 class="card-title">
-                        <a href="{{config.root_url}}notebooks/{{notebook.slug}}">{{notebook.title.value|default('Untitled')|markdown_inline}}</a>
+                        <a href="{{config.root_url}}notebooks/{{notebook.slug}}">{{notebook.title|default('Untitled')|markdown_inline}}</a>
                         <br>
-                        {% if notebook.author.value %}
-                            <small class="author">{{'user'|icon}}{{notebook.author.value|markdown_inline}}</small>
+                        {% if notebook.author %}
+                            <small class="author">{{'user'|icon}}{{notebook.author|markdown_inline}}</small>
                         {% else %}
                             <small class="author none">No author specified</small>
                         {% endif %}

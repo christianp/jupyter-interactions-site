@@ -29,8 +29,8 @@ def truncate(text, length=30):
         return text
 
 class Field(object):
-    is_valid = False
     notebook = None
+    initial = None
 
     def __init__(self, name, path, validator=None, *args, **kwargs):
         self.__init_args = args
@@ -38,6 +38,8 @@ class Field(object):
         self.name = name
         self.path = path
         self.extra_validator = validator
+        if 'initial' in kwargs:
+            self.initial = kwargs['initial']
 
     def bind(self,notebook):
         f2 = type(self)(self.name,self.path,validator=self.extra_validator,*self.__init_args,**self.__init_kwargs)
@@ -56,15 +58,16 @@ class Field(object):
 
     @property
     def value(self):
-
         try:
             v = self.load()
             v = self.clean(v)
             if self.extra_validator:
                 v = self.extra_validator(v)
+            self.valid = True
             return v
         except FieldInvalidException as e:
             e.field = self
+            self.valid = False
             raise e
 
     def load(self):
@@ -80,6 +83,8 @@ class Field(object):
         return v
 
 class MultilineField(Field):
+    initial = ''
+
     def load(self):
         lines = super(MultilineField, self).load()
         try:
@@ -118,9 +123,10 @@ class FieldWithHeaderMixin(object):
             return v[m.end()+1:]
 
 class SingleLineHeaderField(FieldWithHeaderMixin, Field):
-    pass
+    initial = ''
 
 class ListFieldMixin(object):
+    initial = []
     re_list_item = re.compile(r'^[-*]\s+(.*)$', re.MULTILINE)
 
     def clean(self, v):
@@ -131,6 +137,7 @@ class ListFieldWithHeader(ListFieldMixin, FieldWithHeaderMixin, MultilineField):
     pass
 
 class CommaSeparatedListFieldMixin(object):
+    initial = []
     def clean(self, v):
         v = super(FieldCommaSeparatedListMixin, self).clean(v)
         return v.split(',')
@@ -211,22 +218,23 @@ class Notebook(object):
         )
 
         self.make_fields()
+        self.slug = slugify(self.title)
 
     def get_fields(self):
-        for member, value in inspect.getmembers(self):
-            if isinstance(value, Field):
-                yield value
+        return self.fields.values()
 
     def make_fields(self):
-        for field in self.get_fields():
-            setattr(self,field.name, field.bind(self))
-
-    @property
-    def slug(self):
-        try:
-            return slugify(self.title.value)
-        except FieldInvalidException:
-            return ''
+        self.fields = {}
+        for member, value in inspect.getmembers(self):
+            if isinstance(value, Field):
+                field = value
+                bound_field = field.bind(self)
+                self.fields[field.name] = bound_field
+                try:
+                    v = bound_field.value
+                except FieldInvalidException:
+                    v = bound_field.initial
+                setattr(self, bound_field.name, v)
 
     def get_image(self):
         """Get the image to use as thumbnail.
@@ -262,10 +270,6 @@ class Notebook(object):
             try:
                 field.value
             except FieldInvalidException as e:
-                try:
-                    str(e)
-                except Exception:
-                    print(field.name)
                 errors.append(e)
 
         if len(errors):
@@ -290,7 +294,13 @@ class Notebook(object):
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         nb = Notebook(sys.argv[1])
+
+        for f in nb.fields.keys():
+            print(f, nb.fields[f].valid, str(getattr(nb,f))[:100])
+
         if nb.is_valid():
             print("valid")
+        else:
+            print("invalid")
     else:
         print("Missing file")
