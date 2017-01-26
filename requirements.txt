@@ -6,3 +6,4 @@ mistune
 termcolor
 watchdog==0.8.3
 nbconvert==5.0.0
+python-slugify==1.2.1

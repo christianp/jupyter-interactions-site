@@ -1,7 +1,7 @@
 import os
 import jinja2
 import shutil
-from get_metadata import Notebook, NotebookInvalidException
+from get_metadata import Notebook, NotebookInvalidException, FieldInvalidException
 from distutils.dir_util import copy_tree
 from nbconvert.filters.markdown_mistune import markdown2html_mistune
 import yaml
@@ -26,6 +26,33 @@ class EventHandler(FileSystemEventHandler):
         os.chdir(self.site.cwd)
         self.site.build()
 
+def notebook_json(notebook):
+    try:
+        return {
+            'title': notebook.title.value,
+            'author': notebook.author.value,
+            'description': notebook.description.value,
+            'references': notebook.references.value,
+            'keywords': notebook.keywords.value,
+            'requirements': notebook.requirements.value,
+            'filename': notebook.filename,
+        }
+    except FieldInvalidException:
+        return {}
+
+def icon_tag_factory(root_url):
+    def icon_tag(name):
+        return '<svg class="icon icon-{name}"><use xlink:href="{root_url}static/icons/symbol-defs.svg#icon-{name}"></use></svg>'.format(name=name,root_url=root_url)
+    return icon_tag
+
+def markdown_inline(text):
+    html = markdown2html_mistune(text)
+    m = re.match(r'^<p>(.*)</p>$',html)
+    if m:
+        return m.group(1)
+    else:
+        return html
+
 class Site(object):
     def __init__(self,build_path='build',template_path='templates',static_path='static',site_context={},**kwargs):
         self.build_path = build_path
@@ -41,6 +68,9 @@ class Site(object):
         self.template_path = template_path
         self.env = jinja2.Environment(loader=jinja2.FileSystemLoader(self.template_path))
         self.env.filters['markdown'] = markdown2html_mistune
+        self.env.filters['markdown_inline'] = markdown_inline
+        self.env.filters['notebook_json'] = notebook_json
+        self.env.filters['icon'] = icon_tag_factory(self.config.get('root_url','/'))
 
     def make_file(self,template_name,destination,context):
         destination = os.path.join(self.build_path, destination)
@@ -118,11 +148,15 @@ class NotebookSite(Site):
 
         super(NotebookSite,self).build()
 
-        context = {'config': self.config, 'notebooks':self.notebooks}
+        context = {'config': self.config, 'notebooks':self.notebooks, 'valid_notebooks': [nb for nb in self.notebooks if nb.is_valid()]}
 
         files = ['index.html','errors.html','about.html']
         for filename in files:
             self.make_file(filename, filename, context)
+
+        for notebook in self.notebooks:
+            if notebook.is_valid():
+                self.make_file('item.html','notebooks/'+notebook.slug, {'config': self.config, 'notebook': notebook})
 
         print("Success!")
 

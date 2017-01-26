@@ -7,6 +7,7 @@
         <title>{{title|default('Jupyter Interactions')}}</title>
 
         <link rel="stylesheet" href="{{config.root_url}}static/bootstrap/css/bootstrap.min.css"/>
+        <link rel="stylesheet" href="{{config.root_url}}static/icons/style.css"/>
         <link rel="stylesheet" href="{{config.root_url}}static/style.css"/>
 
         <script type="text/x-mathjax-config">
@@ -32,14 +33,17 @@
                 <ul class="navbar-nav" role="navigation">
                     <li class="nav-item">
                         <!-- this should go to a "how to submit a notebook" page -->
-                        <a class="nav-link" href="https://github.com/mikecroucher/jupyter-interactions/blob/master/Readme.md" title="Add a notebook">+</a> 
+                        <a class="nav-link" href="https://github.com/mikecroucher/jupyter-interactions/blob/master/Readme.md" title="Add a notebook to the gallery">
+                            {{'plus'|icon}}
+                            <span class="sr-only">Add a notebook to the gallery</span>
+                        </a> 
                     </li>
                     <li class="nav-item">
                         <!-- this should go to a "how to submit a notebook" page -->
                         <a class="nav-link" href="{{config.root_url}}about">About</a> 
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://github.com/mikecroucher/jupyter-interactions">GitHub</a>
+                        <a class="nav-link" href="https://github.com/mikecroucher/jupyter-interactions">{{'github'|icon}} GitHub</a>
                     </li>
                 </ul>
             </div>

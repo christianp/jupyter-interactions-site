@@ -5,6 +5,8 @@ import re
 import sys
 import inspect
 
+from slugify import slugify
+
 import jmespath
 
 def handle_svg(data):
@@ -218,6 +220,13 @@ class Notebook(object):
     def make_fields(self):
         for field in self.get_fields():
             setattr(self,field.name, field.bind(self))
+
+    @property
+    def slug(self):
+        try:
+            return slugify(self.title.value)
+        except FieldInvalidException:
+            return ''
 
     def get_image(self):
         """Get the image to use as thumbnail.

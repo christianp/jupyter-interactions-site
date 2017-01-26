@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <section id="intro" class="jumbotron container">
+    <header id="intro" class="jumbotron container">
         <h1 class="display-3">Jupyter Interactions</h1>
         <p class="lead">A repository of Jupyter notebooks that demonstrate something using ipywidgets.</p>
-        <p>All contributed notebooks should follow the template laid out in template.ipynb</p>
-    </section>
+    </header>
 
     <section id="item-gallery" class="container-fluid">
         <div class="form-group row" role="search">
@@ -15,8 +14,9 @@
             </div>
         </div>
 
-        <div class="card-columns" id="items">
-            <div class="card item" data-keywords="">
+        <div class="d-flex flex-wrap" id="items">
+            <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+            <div class="card item m-2">
                 <div class="card-block">
                     <h4 class="card-title">
                         <a href="https://github.com/mikecroucher/jupyter-interactions/blob/master/Readme.md" title="Add a notebook"> <!-- this should go to a "how to submit a notebook" page -->
@@ -29,42 +29,28 @@
                     <p class="card-text">Go to <a href="https://github.com/mikecroucher/jupyter-interactions">our GitHub repository</a> to get started.</p>
                 </div>
             </div>
+            </div>
             {% for notebook in notebooks %}
             {% if notebook.is_valid() %}
-            <div class="item card" data-keywords="{% if notebook.keywords.value|length %}{{notebook.keywords.value|join(',')}}{% endif %}">
+            <div class="col-12 col-md-6 col-lg-4 col-xl-3">
+            <div class="item card m-2" data-filename="{{notebook.filename}}">
                 {% if notebook.image.value %}
                 <div class="card-img-top">
-                    <a title="Open the {{notebook.title.value}} notebook" target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.image.value.html|safe}}</a>
+                    <a title="Open the {{notebook.title.value}} notebook" href="{{config.root_url}}notebooks/{{notebook.slug}}">{{notebook.image.value.html|safe}}</a>
                 </div>
                 {% endif %}
                 <div class="card-block">
                     <h4 class="card-title">
-                        <a target="_blank" href="{{site.notebook_runner_url}}{{notebook.filename|urlencode}}">{{notebook.title.value|default('Untitled')|markdown}}</a>
+                        <a href="{{config.root_url}}notebooks/{{notebook.slug}}">{{notebook.title.value|default('Untitled')|markdown_inline}}</a>
                         <br>
                         {% if notebook.author.value %}
-                            <small class="author">{{notebook.author.value|markdown}}</small>
+                            <small class="author">{{'user'|icon}}{{notebook.author.value|markdown_inline}}</small>
                         {% else %}
                             <small class="author none">No author specified</small>
                         {% endif %}
                     </h4>
-                    <div class="card-text">
-                        {% if notebook.description.value %}<div class="description clearfix">{{notebook.description.value|markdown}}</div>{% endif %}
-                        
-                        {% if notebook.references.value|length %}
-                        <div class="references">
-                            <h3>References</h3>
-                            <ul>
-                                {% for ref in notebook.references.value %}
-                                <li>{{ref|markdown}}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% endif %}
-                    </div>
                 </div>
-                <div class="card-footer">
-                    <strong>Keywords:</strong> {% if notebook.keywords.value|length %}{{notebook.keywords.value|join(', ') }}{% else %}<em>None specified</em>{% endif %}
-                </div>
+            </div>
             </div>
             {% endif %}
             {% endfor %}
@@ -73,5 +59,11 @@
 {% endblock content %}
 
 {% block scripts %}
+    <script id="notebook-data" type="application/json">
+        [
+            {% for notebook in valid_notebooks %}{{notebook|notebook_json|tojson}}{% if not loop.last %},{% endif %}{% endfor %}
+        ]
+    </script>
+    <script src="{{config.root_url}}static/lunr.js"></script>
     <script src="{{config.root_url}}static/gallery.js"></script>
 {% endblock scripts %}
