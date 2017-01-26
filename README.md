@@ -25,3 +25,10 @@ Here's how to build the site:
 * To automatically regenerate the site whenever a source file changes, use `--watch`:
 
         python build_site.py --watch
+
+
+### Licence
+
+This code is &copy; 2017 Christian Lawson-Perfect and others, and released under the MIT licence.
+
+Icons from [IcoMoon.io](http://icomoon.io), used under the terms of the Creative Commons Attribution 4.0 licence.
