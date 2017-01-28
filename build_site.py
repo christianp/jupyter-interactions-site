@@ -81,7 +81,7 @@ class Site(object):
         ctx = {}
         ctx.update({'site':self.site_context})
         ctx.update(context)
-        codecs.open(os.path.join(self.build_path,destination),'w',encoding='utf-8').write(template.render(ctx))
+        codecs.open(destination,'w',encoding='utf-8').write(template.render(ctx))
 
     def copy_static(self):
         copy_tree(self.static_path, os.path.join(self.build_path,'static'))
